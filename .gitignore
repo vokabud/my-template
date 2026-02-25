@@ -31,6 +31,9 @@ artifacts/
 # ASP.NET Scaffolding
 ScaffoldingReadMe.txt
 
+# User-specific project files
+*.csproj.user
+
 # NuGet Packages
 *.nupkg
 # NuGet Symbol Packages
@@ -52,3 +55,4 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+/src/services/Template.Api/.vs
