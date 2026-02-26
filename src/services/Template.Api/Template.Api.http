@@ -1,6 +1,36 @@
 @Template.Api_HostAddress = http://localhost:5202
+@TaskId = 00000000-0000-0000-0000-000000000000
 
-GET {{Template.Api_HostAddress}}/tasks
+GET {{Template.Api_HostAddress}}/api/v1/tasks
 Accept: application/json
+
+###
+
+GET {{Template.Api_HostAddress}}/api/v1/tasks/{{TaskId}}
+Accept: application/json
+
+###
+
+POST {{Template.Api_HostAddress}}/api/v1/tasks
+Content-Type: application/json
+
+{
+  "name": "Buy groceries",
+  "description": "Milk, bread, eggs"
+}
+
+###
+
+PUT {{Template.Api_HostAddress}}/api/v1/tasks/{{TaskId}}
+Content-Type: application/json
+
+{
+  "name": "Buy groceries and fruits",
+  "description": "Milk, bread, eggs, apples"
+}
+
+###
+
+DELETE {{Template.Api_HostAddress}}/api/v1/tasks/{{TaskId}}
 
 ###
