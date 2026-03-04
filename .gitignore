@@ -55,4 +55,4 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
-/src/services/Template.Api/.vs
+**/.vs
