@@ -1,4 +1,5 @@
 ﻿using Template.Api.Endpoints.Tasks;
+using Template.ServiceDefaults;
 
 namespace Template.Api.Configuration;
 
@@ -10,13 +11,14 @@ public static partial class Configure
             .ConfigureSwagger()
             .ConfigurePersistence()
             .ConfigureCors()
+            .AddServiceDefaults()
             .Build();
 
         app.RunMigrations();
 
+        app.MapDefaultEndpoints();
         app.UseHttpsRedirection();
         app.UseRouting();
-
         app.UseCors(ClientOrigins);
 
         app.UseSwagger();
