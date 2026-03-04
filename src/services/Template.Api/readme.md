@@ -2,9 +2,25 @@
 
 Simple template for a REST api
 
-For local orchestration with PostgreSQL, run AppHost:
+## Run API only
 
-`dotnet run --project ../Template.AppHost/Template.AppHost.csproj`
+Use API solution:
+
+`src/services/Template.Api/Template.Api.sln`
+
+## Run with Aspire (API + PostgreSQL)
+
+Use AppHost solution:
+
+`../Template.AppHost/Template.AppHost.sln`
+
+Run AppHost with launch profile (required for dashboard endpoints):
+
+`dotnet run --project ../Template.AppHost/Template.AppHost.csproj --launch-profile https`
+
+Visual Studio:
+
+Open `Template.AppHost.sln` when running Aspire orchestration.
 
 # Help
 

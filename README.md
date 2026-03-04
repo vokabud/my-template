@@ -13,7 +13,23 @@ src - source code for services
 
 # Aspire
 
-Run the distributed app (API + PostgreSQL + pgAdmin) from AppHost:
+Aspire orchestration is isolated from the API solution.
 
-`dotnet run --project src/services/Template.AppHost/Template.AppHost.csproj`
+AppHost solution:
+
+`src/services/Template.AppHost/Template.AppHost.sln`
+
+Run distributed app (API + PostgreSQL + dashboard):
+
+`dotnet run --project src/services/Template.AppHost/Template.AppHost.csproj --launch-profile https`
+
+Visual Studio:
+
+Open `Template.AppHost.sln` and run `Template.AppHost` as startup project.
+
+# API only
+
+API solution stays independent:
+
+`src/services/Template.Api/Template.Api.sln`
 
