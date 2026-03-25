@@ -11,7 +11,7 @@ public static partial class Configure
         builder
             .Services
             .AddDbContext<ApplicationDbContext>(options =>
-                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+                options.UseNpgsql(builder.Configuration.GetConnectionString("ApiDatabase")));
 
         builder.Services.AddScoped<IApplicationDbContext, ApplicationDbContext>();
 

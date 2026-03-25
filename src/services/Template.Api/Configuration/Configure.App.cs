@@ -10,6 +10,7 @@ public static partial class Configure
         var app = builder
             .ConfigureSwagger()
             .ConfigurePersistence()
+            .ConfigureMessaging()
             .ConfigureCors()
             .AddServiceDefaults()
             .Build();
