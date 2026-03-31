@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
-using Template.Api.Contracts.Tasks;
+using Template.Api.Endpoints.Tasks;
 using Template.Api.Messaging.Kafka;
 using Template.Api.Persistence;
+using Template.ServiceDefaults.Messaging.Kafka;
 
 namespace Template.Api.Features.Tasks.UpdateTask;
 
@@ -12,7 +13,7 @@ public static class UpdateTaskHandler
         Guid id,
         UpdateTaskRequest request,
         IApplicationDbContext dbContext,
-        ITaskEventPublisher taskEventPublisher,
+        IMessagePublisher publisher,
         CancellationToken cancellationToken)
     {
         var errors = Validate(request.Name, request.Description);
@@ -33,7 +34,12 @@ public static class UpdateTaskHandler
         task.Description = (request.Description ?? string.Empty).Trim();
 
         await dbContext.SaveChangesAsync(cancellationToken);
-        await taskEventPublisher.PublishAsync("updated", TaskSnapshot.FromEntity(task), cancellationToken);
+
+        await publisher.PublishAsync(
+            TaskKafkaTopics.Tasks,
+            task.Id,
+            TaskSnapshot.FromEntity(task),
+            cancellationToken);
 
         var response = new TaskResponse(task.Id, task.Name, task.Description);
 

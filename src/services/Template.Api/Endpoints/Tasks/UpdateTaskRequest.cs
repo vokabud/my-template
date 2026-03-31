@@ -1,3 +1,3 @@
-namespace Template.Api.Contracts.Tasks;
+namespace Template.Api.Endpoints.Tasks;
 
 public sealed record UpdateTaskRequest(string Name, string Description);

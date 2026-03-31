@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
-using Template.Api.Contracts.Tasks;
+using Template.Api.Endpoints.Tasks;
 using Template.Api.Persistence;
 
 namespace Template.Api.Features.Tasks.GetTaskById;

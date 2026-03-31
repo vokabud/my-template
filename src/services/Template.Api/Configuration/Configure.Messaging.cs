@@ -1,5 +1,4 @@
-using Confluent.Kafka;
-using Template.Api.Messaging.Kafka;
+using Template.ServiceDefaults.Messaging.Kafka;
 
 namespace Template.Api.Configuration;
 
@@ -20,7 +19,7 @@ public static partial class Configure
             }
         });
 
-        builder.Services.AddSingleton<ITaskEventPublisher, KafkaTaskEventPublisher>();
+        builder.Services.AddSingleton<IMessagePublisher, KafkaMessagePublisher>();
 
         return builder;
     }
