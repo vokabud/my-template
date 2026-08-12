@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Template.Api.Domain;
 using Template.Api.Endpoints.Tasks;
 using Template.Api.Messaging.Kafka;
+using Template.Api.Messaging.Outbox;
 using Template.Api.Persistence;
-using Template.ServiceDefaults.Messaging.Kafka;
 
 namespace Template.Api.Features.Tasks.CreateTask;
 
@@ -12,7 +12,7 @@ public static class CreateTaskHandler
     public static async Task<Results<Created<TaskResponse>, ValidationProblem>> Handle(
         CreateTaskRequest request,
         IApplicationDbContext dbContext,
-        IMessagePublisher publisher,
+        IOutboxMessageWriter outbox,
         CancellationToken cancellationToken)
     {
         var errors = Validate(request.Name, request.Description);
@@ -30,14 +30,12 @@ public static class CreateTaskHandler
         };
 
         dbContext.Tasks.Add(task);
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        await publisher.PublishAsync(
+        outbox.AddMessage(
             TaskKafkaTopics.Tasks,
             task.Id,
-            TaskSnapshot.FromEntity(task),
-            cancellationToken);
+            TaskSnapshot.FromEntity(task));
+
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         var response = new TaskResponse(task.Id, task.Name, task.Description);
 

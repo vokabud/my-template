@@ -41,10 +41,16 @@ public sealed class KafkaMessagePublisher : IMessagePublisher, IDisposable
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(topic);
 
+        var message = new Message<string, string?>
+        {
+            Key = id.ToString(),
+            Value = null
+        };
+
         var result = await _producer
             .ProduceAsync(
                 topic,
-                null,
+                message,
                 cancellationToken);
 
         _logger.LogInformation(

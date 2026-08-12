@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Template.Api.Messaging.Kafka;
+using Template.Api.Messaging.Outbox;
 using Template.Api.Persistence;
-using Template.ServiceDefaults.Messaging.Kafka;
 
 namespace Template.Api.Features.Tasks.DeleteTask;
 
@@ -11,7 +11,7 @@ public static class DeleteTaskHandler
     public static async Task<Results<NoContent, NotFound>> Handle(
         Guid id,
         IApplicationDbContext dbContext,
-        IMessagePublisher publisher,
+        IOutboxMessageWriter outbox,
         CancellationToken cancellationToken)
     {
         var task = await dbContext.Tasks
@@ -23,11 +23,9 @@ public static class DeleteTaskHandler
         }
 
         dbContext.Tasks.Remove(task);
+        outbox.AddTombstone(TaskKafkaTopics.Tasks, task.Id);
+
         await dbContext.SaveChangesAsync(cancellationToken);
-        await publisher.PublishTombstoneAsync(
-            TaskKafkaTopics.Tasks,
-            task.Id,
-            cancellationToken);
 
         return TypedResults.NoContent();
     }

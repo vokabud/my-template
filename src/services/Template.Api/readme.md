@@ -30,3 +30,7 @@ Run script from the folder were .sln file is placed.
 
 
 `dotnet ef migrations add test --output-dir Persistence/Migrations`
+
+## Kafka outbox
+
+Task create/update/delete handlers write an `OutboxMessages` row in the same EF Core transaction as the task change. `OutboxMessageProcessor` runs in the API host, reads pending rows, publishes them through `IMessagePublisher`, and marks successful messages as processed. Failed publish attempts are retried using `Attempts`, `LastError`, and `NextAttemptAt`.

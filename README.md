@@ -8,8 +8,12 @@ src - source code for services
 
 # TODO
 
-1. Create simple REST api service with db integration, kafka (and outbox)
-2. [x] Add Aspire
+1. [x] Add transactional outbox for Kafka publishing
+2. Add service for background job processing
+3. Add kafka consumption
+4. Add ai agent example (task decomposition from a plain text)
+5. Add base ui for task managemetn
+6. Add auth
 
 # Aspire
 

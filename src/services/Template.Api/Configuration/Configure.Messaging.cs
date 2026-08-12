@@ -1,3 +1,4 @@
+using Template.Api.Messaging.Outbox;
 using Template.ServiceDefaults.Messaging.Kafka;
 
 namespace Template.Api.Configuration;
@@ -20,6 +21,8 @@ public static partial class Configure
         });
 
         builder.Services.AddSingleton<IMessagePublisher, KafkaMessagePublisher>();
+        builder.Services.AddScoped<IOutboxMessageWriter, OutboxMessageWriter>();
+        builder.Services.AddHostedService<OutboxMessageProcessor>();
 
         return builder;
     }

@@ -7,5 +7,7 @@ public interface IApplicationDbContext
 {
     DbSet<TaskEntity> Tasks { get; set; }
 
+    DbSet<OutboxMessage> OutboxMessages { get; set; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

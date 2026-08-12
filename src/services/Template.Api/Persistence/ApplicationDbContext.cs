@@ -7,6 +7,8 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
 {
     public DbSet<TaskEntity> Tasks { get; set; }
 
+    public DbSet<OutboxMessage> OutboxMessages { get; set; }
+
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
