@@ -56,3 +56,7 @@ CodeCoverage/
 TestResult.xml
 nunit-*.xml
 **/.vs
+
+# Agent worktrees and execution scratch state
+.worktrees/
+.superpowers/
