@@ -18,7 +18,7 @@ Every entry must retain a status, concise rationale, and observable acceptance o
 ## Technical debt and engineering maturity
 
 | Direction | Status | Rationale | Observable acceptance outcome |
-| --- | --- | --- |
+| --- | --- | --- | --- |
 | Migrate to .NET 10 and align framework/package versions. | `Planned` | Current projects target .NET 8 while related dependencies span newer version lines. | Project target frameworks and framework-related package versions are aligned on .NET 10, builds succeed, and current-state documentation reflects the verified versions. |
 | Add unit, integration, and architecture tests. | `Planned` | No automated test project currently exists. | The repository contains runnable unit, integration, and architecture test coverage for defined behavior and boundaries, and the test commands complete successfully. |
 | Add CI for restore, build, test, formatting/static analysis, and migration validation. | `Planned` | CI behavior is currently undocumented. | A version-controlled CI workflow runs restore, build, test, formatting or static analysis, and migration validation; its documented commands can be executed by contributors. |
@@ -31,7 +31,7 @@ Every entry must retain a status, concise rationale, and observable acceptance o
 ## Product and platform direction
 
 | Direction | Status | Rationale | Observable acceptance outcome |
-| --- | --- | --- |
+| --- | --- | --- | --- |
 | Background-job processing service. | `Planned` | Some work may need execution outside the request-serving API process. | A separately identified background-job processing service has implemented, verified job-processing behavior and current-state documentation. |
 | Kafka consumption. | `Planned` | The current implementation publishes task records but does not consume Kafka records. | A verified consumer processes defined Kafka records with documented contract and failure behavior. |
 | AI-agent example that decomposes plain text into tasks. | `Planned` | The template has no example of AI-assisted task decomposition. | A documented, runnable example converts plain-text input into observable task decomposition results and has verification evidence. |
