@@ -8,12 +8,12 @@ The operating rules for working in this repository are in [AGENTS.md](../AGENTS.
 
 | Component | Implemented responsibility | Boundary |
 | --- | --- | --- |
-| `Template.Api` | .NET 8 ASP.NET Core Minimal API that maps task HTTP endpoints, runs EF Core migrations at startup, performs task use cases, and hosts the outbox processor. | `src/services/Template.Api` |
+| `Template.Api` | .NET 10 ASP.NET Core Minimal API that maps task HTTP endpoints, runs EF Core 10 migrations through the Npgsql 10 provider at startup, performs task use cases, and hosts the outbox processor. | `src/services/Template.Api` |
 | PostgreSQL | Stores the `Tasks` and `OutboxMessages` tables through EF Core/Npgsql migrations. | Connection string `ApiDatabase`; mappings and migrations under `src/services/Template.Api/Persistence` |
 | Outbox processor | Hosted service that selects eligible unprocessed rows, publishes them, then records processing or retry state. | `src/services/Template.Api/Messaging/Outbox/OutboxMessageProcessor.cs` |
 | Kafka | Receives task records on the configured topic from the Confluent producer. | Topic and payload contract under `src/services/Template.Api/Messaging/Kafka`; publisher under `src/common/Template.ServiceDefaults/Messaging/Kafka` |
 | `Template.ServiceDefaults` | Reusable health-endpoint and Kafka-publishing defaults. It registers health checks and maps `/health` and `/alive`; it also supplies `KafkaOptions`, `IMessagePublisher`, and `KafkaMessagePublisher`. | `src/common/Template.ServiceDefaults` |
-| `Template.AppHost` | Optional Aspire AppHost which provisions PostgreSQL, its `ApiDatabase` database, Kafka, and Kafka UI; it references those resources from `Template.Api` and waits for the database and Kafka. | `src/services/Template.AppHost` |
+| `Template.AppHost` | Optional Aspire 13.4.6 AppHost which provisions PostgreSQL, its `ApiDatabase` database, Kafka, and Kafka UI; it references those resources from `Template.Api` and waits for the database and Kafka. | `src/services/Template.AppHost` |
 
 ## Repository and project boundaries
 
@@ -104,6 +104,5 @@ Before changing these surfaces, review both call sites and the listed source of 
 - CI behavior is undocumented.
 - No authentication is implemented.
 - No Kafka consumer, user interface, dedicated background-job service, or AI-agent example is implemented.
-- The projects target .NET 8 while the API uses EF Core 9 packages and the AppHost uses Aspire 9.5 packages.
 
 For future intent and prioritization, see [docs/roadmap.md](roadmap.md). For operating rules and the required transactional-outbox boundary, see [AGENTS.md](../AGENTS.md).

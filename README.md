@@ -19,6 +19,10 @@ A .NET task-management backend template built around a Minimal API, PostgreSQL p
 | `src/common/Template.ServiceDefaults` | Shared health-endpoint and Kafka-publishing defaults. |
 | `docs` | Architecture reference, roadmap, and supporting documentation. |
 
+## Prerequisites
+
+Install a stable .NET 10 SDK compatible with the repository-root `global.json`. Its `latestFeature` policy permits newer installed .NET 10 feature bands and patches, but it does not roll forward to .NET 11. Running the optional Aspire composition also requires a running Docker-compatible container engine.
+
 ## Run the API
 
 The API can run independently of Aspire. This path requires a reachable PostgreSQL instance and `ConnectionStrings:ApiDatabase`; Kafka configuration is required for publishing. See the [configuration inventory](docs/architecture.md#configuration-inventory). From the repository root:
@@ -31,7 +35,7 @@ The API solution is `src/services/Template.Api/Template.Api.sln`.
 
 ## Run with Aspire (optional)
 
-For local orchestration of the API, PostgreSQL, and Kafka, run:
+For local orchestration of the API, PostgreSQL, and Kafka, start a Docker-compatible container engine and run:
 
 ```powershell
 dotnet run --project src/services/Template.AppHost/Template.AppHost.csproj --launch-profile https

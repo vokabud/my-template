@@ -2,7 +2,7 @@
 
 ## Project at a glance
 
-This repository is a task-management backend template: a .NET 8 ASP.NET Core Minimal API, PostgreSQL persistence through EF Core 9, Kafka publishing through a transactional outbox, shared service defaults, and optional .NET Aspire 9.5 orchestration. Planned capabilities are not implemented unless source and [`docs/roadmap.md`](docs/roadmap.md) show otherwise.
+This repository is a task-management backend template: a .NET 10 ASP.NET Core Minimal API, PostgreSQL persistence through EF Core 10 and Npgsql 10, Kafka publishing through a transactional outbox, shared service defaults, and optional .NET Aspire 13.4.6 orchestration. Planned capabilities are not implemented unless source and [`docs/roadmap.md`](docs/roadmap.md) show otherwise.
 
 Before changing anything, read [`docs/architecture.md`](docs/architecture.md) and [`docs/roadmap.md`](docs/roadmap.md), then inspect the relevant source and configuration.
 
