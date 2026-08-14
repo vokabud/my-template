@@ -5,3 +5,5 @@ var builder = WebApplication.CreateBuilder(args);
 var app = builder.ConfigureApp();
 
 app.Run();
+
+public partial class Program;
