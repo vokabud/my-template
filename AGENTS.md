@@ -28,10 +28,11 @@ dotnet restore src/services/Template.Api/Template.Api.sln
 dotnet build src/services/Template.Api/Template.Api.sln --no-restore
 dotnet restore src/services/Template.AppHost/Template.AppHost.sln
 dotnet build src/services/Template.AppHost/Template.AppHost.sln --no-restore
+dotnet test src/services/Template.Api/Template.Api.sln -m:1
 dotnet run --project src/services/Template.AppHost/Template.AppHost.csproj --launch-profile https
 ```
 
-No automated test project exists. Build success is compilation verification, not behavioral verification.
+Unit and architecture tests run without Docker. Integration tests require a running Docker-compatible engine and use a disposable PostgreSQL container; Kafka publishing is replaced by a test double. Build success remains compilation verification, not behavioral verification.
 
 ## Change workflow
 

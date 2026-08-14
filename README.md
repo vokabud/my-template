@@ -43,7 +43,7 @@ dotnet run --project src/services/Template.AppHost/Template.AppHost.csproj --lau
 
 The AppHost has its own solution at `src/services/Template.AppHost/Template.AppHost.sln`; it is optional and does not replace the API-only run path.
 
-## Verify compilation
+## Verify the application
 
 These commands are a convenience mirror of `AGENTS.md`, which is authoritative.
 
@@ -56,7 +56,17 @@ dotnet restore src/services/Template.AppHost/Template.AppHost.sln
 dotnet build src/services/Template.AppHost/Template.AppHost.sln --no-restore
 ```
 
-No automated tests currently exist. Successful compilation verifies that the projects build; it is not behavioral verification.
+The API solution contains separate unit, integration, and architecture test projects under `src/services/Template.Api/tests`.
+Unit and architecture tests do not require Docker. Integration tests start a disposable PostgreSQL container, apply the real EF Core migrations, and replace Kafka publishing with an in-process test double; they require a running Docker-compatible engine.
+
+```powershell
+dotnet test src/services/Template.Api/tests/Template.Api.UnitTests/Template.Api.UnitTests.csproj
+dotnet test src/services/Template.Api/tests/Template.ArchitectureTests/Template.ArchitectureTests.csproj
+dotnet test src/services/Template.Api/tests/Template.Api.IntegrationTests/Template.Api.IntegrationTests.csproj
+dotnet test src/services/Template.Api/Template.Api.sln -m:1
+```
+
+Successful compilation remains a separate check from behavioral verification.
 
 ## Documentation
 

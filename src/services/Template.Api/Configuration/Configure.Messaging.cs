@@ -22,6 +22,7 @@ public static partial class Configure
 
         builder.Services.AddSingleton<IMessagePublisher, KafkaMessagePublisher>();
         builder.Services.AddScoped<IOutboxMessageWriter, OutboxMessageWriter>();
+        builder.Services.AddScoped<IOutboxBatchProcessor, OutboxBatchProcessor>();
         builder.Services.AddHostedService<OutboxMessageProcessor>();
 
         return builder;
