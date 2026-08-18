@@ -2,18 +2,21 @@
 
 ## Project at a glance
 
-This repository is a task-management backend template: a .NET 10 ASP.NET Core Minimal API, PostgreSQL persistence through EF Core 10 and Npgsql 10, Kafka publishing through a transactional outbox, shared service defaults, and optional .NET Aspire 13.4.6 orchestration. Planned capabilities are not implemented unless source and [`docs/roadmap.md`](docs/roadmap.md) show otherwise.
+This repository is a task-management backend template: a .NET 10 ASP.NET Core Minimal API, a separate Hangfire background-job service, PostgreSQL persistence through EF Core 10 and Npgsql 10, Kafka publishing through a transactional outbox, shared service defaults, and optional .NET Aspire 13.4.6 orchestration. Planned capabilities are not implemented unless source and [`docs/roadmap.md`](docs/roadmap.md) show otherwise.
 
 Before changing anything, read [`docs/architecture.md`](docs/architecture.md) and [`docs/roadmap.md`](docs/roadmap.md), then inspect the relevant source and configuration.
 
 ## Repository map and boundaries
 
 - `src/services/Template.Api` — independently runnable API.
+- `src/services/Template.BackgroundJobs` — independently runnable Hangfire processor and read-only task API.
 - `src/services/Template.AppHost` — optional Aspire orchestration.
 - `src/common/Template.ServiceDefaults` — reusable hosting and messaging defaults only.
 - `docs` — architecture, roadmap, and supporting documentation.
 
 Put HTTP contracts and route mappings in `Endpoints`; use cases in feature folders under `Features`; EF Core persistence in `Persistence`; and Kafka/outbox infrastructure in `Messaging`. Keep `Template.Api` runnable without `Template.AppHost`.
+
+Keep `Template.BackgroundJobs` runnable without `Template.AppHost`. Its EF Core migrations own only the application `Tasks` table; Hangfire owns its tables in the separate `hangfire` schema. Preserve idempotent conditional task processing because dispatcher delivery is at least once.
 
 Task mutation and its outbox record must use the same EF Core transaction. Mutation handlers must not publish directly to Kafka; the outbox processor publishes pending records.
 
@@ -28,7 +31,10 @@ dotnet restore src/services/Template.Api/Template.Api.sln
 dotnet build src/services/Template.Api/Template.Api.sln --no-restore
 dotnet restore src/services/Template.AppHost/Template.AppHost.sln
 dotnet build src/services/Template.AppHost/Template.AppHost.sln --no-restore
+dotnet restore src/services/Template.BackgroundJobs/Template.BackgroundJobs.sln
+dotnet build src/services/Template.BackgroundJobs/Template.BackgroundJobs.sln --no-restore
 dotnet test src/services/Template.Api/Template.Api.sln -m:1
+dotnet test src/services/Template.BackgroundJobs/Template.BackgroundJobs.sln -m:1
 dotnet run --project src/services/Template.AppHost/Template.AppHost.csproj --launch-profile https
 ```
 

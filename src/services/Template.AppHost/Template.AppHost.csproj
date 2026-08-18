@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Template.Api\Template.Api.csproj" />
+    <ProjectReference Include="..\Template.BackgroundJobs\Template.BackgroundJobs.csproj" />
   </ItemGroup>
 
 </Project>

@@ -9,15 +9,18 @@ The operating rules for working in this repository are in [AGENTS.md](../AGENTS.
 | Component | Implemented responsibility | Boundary |
 | --- | --- | --- |
 | `Template.Api` | .NET 10 ASP.NET Core Minimal API that maps task HTTP endpoints, runs EF Core 10 migrations through the Npgsql 10 provider at startup, performs task use cases, and hosts the outbox processor. | `src/services/Template.Api` |
+| `Template.BackgroundJobs` | Independently runnable .NET 10 ASP.NET Core host that lists manually inserted tasks, runs a minute-based Hangfire dispatcher, processes tasks idempotently, and exposes a Development-only Dashboard. | `src/services/Template.BackgroundJobs` |
 | PostgreSQL | Stores the `Tasks` and `OutboxMessages` tables through EF Core/Npgsql migrations. | Connection string `ApiDatabase`; mappings and migrations under `src/services/Template.Api/Persistence` |
+| Background-jobs PostgreSQL database | Stores the background service's application `Tasks` table and Hangfire infrastructure in separate schemas. | Connection string `BackgroundJobsDatabase`; EF mappings and migrations under `src/services/Template.BackgroundJobs/Persistence`; Hangfire-owned `hangfire` schema |
 | Outbox processor | Hosted polling service that creates a scope and delegates one eligible batch to a scoped processor, which publishes rows and records processing or retry state. | `src/services/Template.Api/Messaging/Outbox/OutboxMessageProcessor.cs` and `OutboxBatchProcessor.cs` |
 | Kafka | Receives task records on the configured topic from the Confluent producer. | Topic and payload contract under `src/services/Template.Api/Messaging/Kafka`; publisher under `src/common/Template.ServiceDefaults/Messaging/Kafka` |
 | `Template.ServiceDefaults` | Reusable health-endpoint and Kafka-publishing defaults. It registers health checks and maps `/health` and `/alive`; it also supplies `KafkaOptions`, `IMessagePublisher`, and `KafkaMessagePublisher`. | `src/common/Template.ServiceDefaults` |
-| `Template.AppHost` | Optional Aspire 13.4.6 AppHost which provisions PostgreSQL, its `ApiDatabase` database, Kafka, and Kafka UI; it references those resources from `Template.Api` and waits for the database and Kafka. | `src/services/Template.AppHost` |
+| `Template.AppHost` | Optional Aspire 13.4.6 AppHost which provisions PostgreSQL with separate `ApiDatabase` and `BackgroundJobsDatabase` databases, Kafka, and Kafka UI; it starts both services with their required references. | `src/services/Template.AppHost` |
 
 ## Repository and project boundaries
 
 - `src/services/Template.Api` is the independently runnable application. HTTP contracts and mappings live in `Endpoints`; use cases live under `Features`; EF Core context, configurations, and migrations live in `Persistence`; Kafka-task and transactional-outbox infrastructure live in `Messaging`.
+- `src/services/Template.BackgroundJobs` is independently runnable and does not reference `Template.Api`. Its read-only HTTP contract lives in `Endpoints`, durable job behavior in `Jobs`, and its application-owned model and migrations in `Persistence`.
 - `src/common/Template.ServiceDefaults` contains reusable hosting and messaging defaults only. It does not own task HTTP contracts, feature handlers, or persistence models.
 - `src/services/Template.AppHost` is the optional Aspire composition project. It owns resource orchestration, not API behavior.
 - `docs` contains the architecture reference, roadmap, and related documentation.
@@ -70,11 +73,28 @@ The outbox processor is registered as a hosted service, the writer as scoped, an
 
 ## Optional Aspire AppHost flow
 
-`src/services/Template.AppHost/Program.cs` creates a PostgreSQL resource, creates the `ApiDatabase` database, creates Kafka, and adds Kafka UI. It adds `Template.Api` as a project, passes database and Kafka references to it, and waits for both resources. This flow is an AppHost composition path; it does not replace the API's own PostgreSQL and Kafka configuration requirements when the API runs independently.
+`src/services/Template.AppHost/Program.cs` creates one PostgreSQL server resource with separate `ApiDatabase` and `BackgroundJobsDatabase` databases, creates Kafka, and adds Kafka UI. It passes database and Kafka references to `Template.Api`, passes only the background database reference to `Template.BackgroundJobs`, and waits for required resources. This flow is an AppHost composition path; it does not replace either service's independent configuration requirements.
+
+## Background-job processing flow
+
+The background service applies its EF Core migrations at startup, then registers the stable Hangfire recurring job `dispatch-pending-tasks` with the `Cron.Minutely` UTC schedule. Hangfire stores its state under the `hangfire` schema in `BackgroundJobsDatabase`; EF Core owns only the public `Tasks` table.
+
+```text
+manual Pending task insert
+  -> recurring TaskDispatcherJob selects up to DispatcherBatchSize IDs ordered by ID
+  -> one TaskProcessingJob is enqueued per selected ID
+  -> processing conditionally updates Pending to Processed and sets ProcessedAt
+  -> the winning invocation logs task ID and name
+  -> duplicate invocations observe no pending row and exit successfully
+```
+
+The application status values are `Pending` and `Processed`, persisted as text with database check constraints. Dispatch is at least once: the dispatcher does not change task status, so more than one Hangfire job may be created before processing completes. `EfTaskStore.TryProcessAsync` guards the update by ID and pending status; therefore only one competing job reports successful processing. The success log is operational telemetry and is emitted after the committed state change.
+
+`GET /api/v1/tasks` returns `Id`, `Name`, `Status`, and `ProcessedAt`, ordered by name and ID. No mutation endpoints or seed workflow are implemented. `/hangfire` is anonymously mapped only in the `Development` environment and is absent elsewhere.
 
 ## Configuration inventory
 
-The verified application settings files are `src/services/Template.Api/appsettings.json` and `appsettings.Development.json`. `Configure.Persistence.cs`, `Configure.Messaging.cs`, and `Configure.Cors.cs` consume these configuration keys:
+The verified application settings files are the `appsettings.json` and `appsettings.Development.json` files under both `src/services/Template.Api` and `src/services/Template.BackgroundJobs`. Their configuration extensions consume these keys:
 
 | Key or section | Consumer | Current behavior |
 | --- | --- | --- |
@@ -83,6 +103,8 @@ The verified application settings files are `src/services/Template.Api/appsettin
 | `Kafka:BootstrapServers` | `KafkaOptions` | Default bootstrap-server setting bound to `KafkaOptions`. |
 | `Kafka:ClientId` | `KafkaOptions` | Client identifier bound to `KafkaOptions`. |
 | `Cors:AllowedOrigins` | `ConfigureCors` | Defines the origins supplied to the `ClientOrigins` policy; the development file adds additional origins. |
+| `ConnectionStrings:BackgroundJobsDatabase` | Background jobs persistence and Hangfire configuration | Supplies the PostgreSQL connection for both EF Core and Hangfire; Hangfire uses its own schema. |
+| `BackgroundJobs:DispatcherBatchSize` | `TaskDispatcherJob` | Positive maximum number of pending task IDs selected per minute; defaults to 100. |
 
 `Template.Api.csproj` and `Template.AppHost.csproj` also declare user-secrets identifiers; their secret values are not repository configuration. No other configuration keys are asserted here.
 
@@ -97,12 +119,13 @@ Before changing these surfaces, review both call sites and the listed source of 
 | Database schema and migration history | `src/services/Template.Api/Persistence/Configurations` and `Persistence/Migrations` |
 | Configuration keys | `src/services/Template.Api/appsettings*.json` and the `Configure.*.cs` consumers |
 | DI registrations and hosted processing | `src/services/Template.Api/Configuration/Configure.Persistence.cs` and `Configure.Messaging.cs` |
+| Background task API, state, schedule, and schema | `src/services/Template.BackgroundJobs/Endpoints`, `Domain`, `Jobs`, `Persistence/Migrations`, and `Configuration` |
 
 ## Known current-state gaps
 
 - CI behavior is undocumented.
 - No authentication is implemented.
-- No Kafka consumer, user interface, dedicated background-job service, or AI-agent example is implemented.
+- No Kafka consumer, user interface, or AI-agent example is implemented.
 
 ## Automated testing
 
@@ -113,5 +136,7 @@ The API solution contains three .NET 10 xUnit v3 test projects under `src/servic
 - `Template.ArchitectureTests` enforces namespace, dependency, and project-reference boundaries without Docker.
 
 The integration suite requires a running Docker-compatible engine. `IOutboxBatchProcessor` is the deterministic scoped seam used by both the hosted polling service and integration tests; tests do not wait for polling intervals.
+
+The background-job solution contains 15 unit tests, 5 PostgreSQL integration tests, and 5 architecture tests. Unit tests cover model metadata and design-time creation, processor and dispatcher orchestration, options, Hangfire enqueueing and registration, and the read-only handler. Integration tests use a disposable PostgreSQL container to verify application/Hangfire schema separation, constraints, API ordering, competing processing, and environment-sensitive Dashboard mapping. Tests invoke job seams directly instead of waiting for the minute schedule.
 
 For future intent and prioritization, see [docs/roadmap.md](roadmap.md). For operating rules and the required transactional-outbox boundary, see [AGENTS.md](../AGENTS.md).

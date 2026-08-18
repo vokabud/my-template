@@ -1,6 +1,6 @@
 # Task Management Backend Template
 
-A .NET task-management backend template built around a Minimal API, PostgreSQL persistence, and reliable Kafka event publishing through a transactional outbox.
+A .NET task-management backend template built around Minimal APIs, PostgreSQL persistence, reliable Kafka event publishing through a transactional outbox, and Hangfire background-job processing.
 
 ## Current capabilities
 
@@ -9,12 +9,15 @@ A .NET task-management backend template built around a Minimal API, PostgreSQL p
 - Kafka publishing through a transactional outbox.
 - Health endpoints at `/health` and `/alive`.
 - Optional .NET Aspire orchestration for local API, PostgreSQL, and Kafka resources.
+- Separately runnable Hangfire service that dispatches and processes manually inserted tasks.
+- Read-only background-task API and Development-only Hangfire Dashboard.
 
 ## Repository structure
 
 | Path | Purpose |
 | --- | --- |
 | `src/services/Template.Api` | Independently runnable task API. |
+| `src/services/Template.BackgroundJobs` | Independently runnable Hangfire task processor and read-only API. |
 | `src/services/Template.AppHost` | Optional Aspire orchestration for local development. |
 | `src/common/Template.ServiceDefaults` | Shared health-endpoint and Kafka-publishing defaults. |
 | `docs` | Architecture reference, roadmap, and supporting documentation. |
@@ -33,9 +36,28 @@ dotnet run --project src/services/Template.Api/Template.Api.csproj
 
 The API solution is `src/services/Template.Api/Template.Api.sln`.
 
+## Run the background-job service
+
+The service uses its own PostgreSQL database. Supply `ConnectionStrings:BackgroundJobsDatabase` through user secrets or the `ConnectionStrings__BackgroundJobsDatabase` environment variable, then run:
+
+```powershell
+dotnet run --project src/services/Template.BackgroundJobs/Template.BackgroundJobs.csproj
+```
+
+Insert pending tasks manually:
+
+```sql
+INSERT INTO "Tasks" ("Id", "Name", "Status", "ProcessedAt")
+VALUES (gen_random_uuid(), 'Example task', 'Pending', NULL);
+```
+
+The service exposes `GET /api/v1/tasks`. In `Development`, the anonymously accessible Hangfire Dashboard is available at `/hangfire`; the route is not mapped in other environments. The recurring dispatcher checks for pending tasks once per minute and enqueues at most 100 by default. Duplicate jobs are safe because only the first conditional transition from `Pending` to `Processed` succeeds.
+
+The background-job solution is `src/services/Template.BackgroundJobs/Template.BackgroundJobs.sln`.
+
 ## Run with Aspire (optional)
 
-For local orchestration of the API, PostgreSQL, and Kafka, start a Docker-compatible container engine and run:
+For local orchestration of the API, background-job service, their separate PostgreSQL databases, and Kafka, start a Docker-compatible container engine and run:
 
 ```powershell
 dotnet run --project src/services/Template.AppHost/Template.AppHost.csproj --launch-profile https
@@ -54,6 +76,8 @@ dotnet restore src/services/Template.Api/Template.Api.sln
 dotnet build src/services/Template.Api/Template.Api.sln --no-restore
 dotnet restore src/services/Template.AppHost/Template.AppHost.sln
 dotnet build src/services/Template.AppHost/Template.AppHost.sln --no-restore
+dotnet restore src/services/Template.BackgroundJobs/Template.BackgroundJobs.sln
+dotnet build src/services/Template.BackgroundJobs/Template.BackgroundJobs.sln --no-restore
 ```
 
 The API solution contains separate unit, integration, and architecture test projects under `src/services/Template.Api/tests`.
@@ -64,6 +88,7 @@ dotnet test src/services/Template.Api/tests/Template.Api.UnitTests/Template.Api.
 dotnet test src/services/Template.Api/tests/Template.ArchitectureTests/Template.ArchitectureTests.csproj
 dotnet test src/services/Template.Api/tests/Template.Api.IntegrationTests/Template.Api.IntegrationTests.csproj
 dotnet test src/services/Template.Api/Template.Api.sln -m:1
+dotnet test src/services/Template.BackgroundJobs/Template.BackgroundJobs.sln -m:1
 ```
 
 Successful compilation remains a separate check from behavioral verification.

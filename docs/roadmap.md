@@ -32,7 +32,7 @@ Every entry must retain a status, concise rationale, and observable acceptance o
 
 | Direction | Status | Rationale | Observable acceptance outcome |
 | --- | --- | --- | --- |
-| Background-job processing service. | `Planned` | Some work may need execution outside the request-serving API process. | A separately identified background-job processing service has implemented, verified job-processing behavior and current-state documentation. |
+| Background-job processing service. | `Complete` | A separately runnable Hangfire service now processes manually inserted tasks outside the request-serving API process. | The service uses its own PostgreSQL database, dispatches pending tasks once per minute, performs an idempotent `Pending` to `Processed` transition, exposes a read-only API and Development-only Dashboard, and is verified by 15 unit, 5 PostgreSQL integration, and 5 architecture tests. |
 | Kafka consumption. | `Planned` | The current implementation publishes task records but does not consume Kafka records. | A verified consumer processes defined Kafka records with documented contract and failure behavior. |
 | AI-agent example that decomposes plain text into tasks. | `Planned` | The template has no example of AI-assisted task decomposition. | A documented, runnable example converts plain-text input into observable task decomposition results and has verification evidence. |
 | Task-management UI. | `Planned` | The current application exposes an API only. | A usable task-management interface performs documented task workflows against the API and has verification evidence. |
